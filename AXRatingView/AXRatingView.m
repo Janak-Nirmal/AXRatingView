@@ -5,6 +5,12 @@
 #import "AXRatingView.h"
 #import <QuartzCore/QuartzCore.h>
 
+#define SYSTEM_VERSION_EQUAL_TO(v)                  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedSame)
+#define SYSTEM_VERSION_GREATER_THAN(v)              ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedDescending)
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
+
 @implementation AXRatingView
 
 - (id)initWithFrame:(CGRect)frame
@@ -47,20 +53,31 @@
 
 - (UIImage *)markImage
 {
-  if (_markImage) {
-    return _markImage;
-  } else {
-    CGSize size =[_markCharacter sizeWithAttributes:@{NSFontAttributeName:_markFont}];
-    
-    UIGraphicsBeginImageContextWithOptions(size, NO, 2.0);
-    [[UIColor blackColor] set];
-    [_markCharacter drawAtPoint:CGPointZero
-                 withAttributes:@{NSFontAttributeName: _markFont,
-                                  NSForegroundColorAttributeName: [UIColor blackColor]}];
-    UIImage *markImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return _markImage = markImage;
-  }
+    if (_markImage) {
+        return _markImage;
+    } else {
+        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"7.0")){
+            CGSize size =[_markCharacter sizeWithAttributes:@{NSFontAttributeName:_markFont}];
+            
+            UIGraphicsBeginImageContextWithOptions(size, NO, 2.0);
+            [[UIColor blackColor] set];
+            [_markCharacter drawAtPoint:CGPointZero
+                         withAttributes:@{NSFontAttributeName: _markFont,
+                                          NSForegroundColorAttributeName: [UIColor blackColor]}];
+            UIImage *markImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            return _markImage = markImage;
+        } else {
+            CGSize size = [_markCharacter sizeWithFont:_markFont];
+            UIGraphicsBeginImageContextWithOptions(size, NO, 2.0);
+            [[UIColor blackColor] set];
+            CGRect drawRect = CGRectMake(0, 0, size.width, size.height);
+            [_markCharacter drawInRect:drawRect withFont:_markFont];
+            UIImage *markImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+            return _markImage = markImage;
+        }
+    }
 }
 
 - (void)setValue:(float)value
